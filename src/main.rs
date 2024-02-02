@@ -78,7 +78,7 @@ async fn hello(
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addrs = tokio::fs::read_to_string("./config").await.unwrap();
-    let addrs_iter = addrs.to_socket_addrs();
+    let addrs_iter = addrs.trim().to_socket_addrs();
     if addrs_iter.is_err() {
         panic!("{}", addrs_iter.unwrap_err());
     }
