@@ -1,5 +1,5 @@
 [package]
-name = "reverse_proxy_sys"
+name = "unblock_proxy_sys"
 version = "0.1.0"
 edition = "2021"
 
