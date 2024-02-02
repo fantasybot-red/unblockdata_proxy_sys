@@ -142,3 +142,4 @@ jobs:
           tag: ${{ startsWith(github.event.head_commit.message, 'ver') && github.event.head_commit.message || steps.vars.outputs.sha_short }}
           file_glob: true
           prerelease: ${{ !startsWith(github.event.head_commit.message, 'ver') }}
+          
