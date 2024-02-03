@@ -25,7 +25,6 @@ fn remove_leading_slash(input: &str) -> &str {
 async fn hello(
     mut req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, Infallible> {
-    let on_req_upgrade = hyper::upgrade::on(&mut req);
     let connector = HttpsConnector::new();
     let path_req = remove_leading_slash(req.uri().path());
     let der_rs = decrypt(path_req);
@@ -53,6 +52,7 @@ async fn hello(
             req.headers_mut().remove(k_name);
         }
     }
+    let on_req_upgrade = hyper::upgrade::on(&mut req);
     let sender = legacy::Builder::new(TokioExecutor::new()).build(connector);
     let resp_raw = sender.request(req).await;
     if resp_raw.is_err() {
@@ -60,11 +60,11 @@ async fn hello(
         return Ok(Response::builder().status(StatusCode::GATEWAY_TIMEOUT).body(BoxBody::default()).unwrap());
     }
     let mut resp = resp_raw.unwrap();
-    let on_resp_upgrade = hyper::upgrade::on(&mut resp).await;
+    let on_resp_upgrade = hyper::upgrade::on(&mut resp);
     if resp.status() == StatusCode::SWITCHING_PROTOCOLS {
         tokio::spawn(async move {
+            let mut resp_up = TokioIo::new(on_resp_upgrade.await.unwrap());
             let mut req_up = TokioIo::new(on_req_upgrade.await.unwrap());
-            let mut resp_up = TokioIo::new(on_resp_upgrade.unwrap());
             tokio::io::copy_bidirectional(&mut req_up, &mut resp_up)
                 .await
                 .unwrap();
@@ -90,7 +90,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let io = TokioIo::new(tcp);
         tokio::task::spawn(async move {
             if let Err(err) = auto::Builder::new(TokioExecutor::new())
-                .serve_connection(io, service_fn(hello))
+                .serve_connection_with_upgrades(io, service_fn(hello))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
