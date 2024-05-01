@@ -4,7 +4,7 @@
 
 ## how to use
 
-**you just need to edit config file and put it in dir were you run this application** 
+**you just need to edit config file and put it in dir were you run this application then add proxy.js to your web** 
 
 here is a example configuration file [config.yml](https://github.com/thedtvn/reverse_proxy_sys/blob/main/config.yaml)
 
